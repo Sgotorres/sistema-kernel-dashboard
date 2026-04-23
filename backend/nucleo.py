@@ -1,13 +1,18 @@
 from flask import Flask, jsonify
 from flask_cors import CORS
 import psutil
+import logging # NUEVO: Herramienta para controlar los mensajes del sistema
 
 app = Flask(__name__)
-# Habilitamos CORS para que nuestro frontend en Electron/HTML pueda leer esta API
 CORS(app) 
+
+# NUEVO: Le decimos a Flask (werkzeug) que se calle y solo nos avise si hay errores graves
+log = logging.getLogger('werkzeug')
+log.setLevel(logging.ERROR)
 
 @app.route('/api/sistema', methods=['GET'])
 def obtener_datos():
+# ... (de aquí para abajo, el resto de tu código queda exactamente igual)
     # 1. CPU y RAM
     uso_cpu = psutil.cpu_percent(interval=0.1) # Intervalo más corto para respuestas rápidas
     memoria = psutil.virtual_memory()
@@ -45,7 +50,7 @@ def obtener_datos():
     return jsonify(datos_sistema)
 
 if __name__ == "__main__":
-    print("🚀 Servidor del Kernel iniciado en el puerto 5000...")
-    print("👉 Entra en tu navegador a: http://localhost:5000/api/sistema")
+    print("Servidor del Kernel iniciado en el puerto 5000...")
+    print("Entra en tu navegador a: http://localhost:5000/api/sistema")
     # debug=False para evitar que reinicie dos veces los hilos de psutil
     app.run(port=5000, debug=False)
