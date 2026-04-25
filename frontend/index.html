@@ -47,6 +47,21 @@
     <ul id="lista-procesos" style="list-style-type: none; padding: 0; margin: 0; color: #aaa;">
       <li>Buscando procesos...</li>
     </ul>
+    <button id="btn-ver-todos" style="margin-top: 15px; padding: 8px 15px; cursor: pointer; background: #4CAF50; border: none; color: white; border-radius: 4px; font-weight: bold; width: 100%;">Ver Administrador de Tareas</button>
+  </div>
+    
+  <div id="modal-procesos" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); padding: 20px; box-sizing: border-box; z-index: 1000;">
+    <div style="background: #2d2d2d; padding: 20px; border-radius: 8px; max-width: 700px; margin: 20px auto; height: 85%; display: flex; flex-direction: column; border-left: 4px solid #4CAF50;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <h2 style="margin: 0;">⚙️ Administrador de Tareas (RAM)</h2>
+            <button id="btn-cerrar-modal" style="cursor: pointer; background: #f44336; border: none; color: white; padding: 8px 15px; border-radius: 4px; font-weight: bold;">Cerrar</button>
+        </div>
+        <div style="overflow-y: auto; flex-grow: 1; padding-right: 10px;">
+            <ul id="lista-todos-procesos" style="list-style-type: none; padding: 0; margin: 0; color: #aaa;">
+                <li>Cargando todos los procesos...</li>
+            </ul>
+        </div>
+    </div>
   </div>
     
   <script src="index.js"></script>

@@ -44,6 +44,20 @@ def obtener_datos():
     
     return jsonify(datos_sistema)
 
+@app.route('/api/procesos', methods=['GET'])
+def obtener_todos_procesos():
+    procesos = []
+    for proc in psutil.process_iter(['pid', 'name', 'memory_percent']):
+        try:
+            if proc.info['memory_percent'] is not None:
+                procesos.append(proc.info)
+        except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
+            pass
+            
+    # Ordenamos de mayor a menor consumo de RAM, pero esta vez los devolvemos TODOS
+    procesos_ordenados = sorted(procesos, key=lambda p: p['memory_percent'], reverse=True)
+    return jsonify(procesos_ordenados)
+
 if __name__ == "__main__":
     print("🚀 Servidor del Kernel iniciado en el puerto 5000...")
     print("👉 Entra en tu navegador a: http://localhost:5000/api/sistema")
