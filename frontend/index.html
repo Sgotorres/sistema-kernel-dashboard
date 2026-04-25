@@ -3,24 +3,74 @@
 <head>
   <meta charset="UTF-8">
   <title>Monitor del Kernel</title>
-  <style>
+ <style>
     body { 
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-      background-color: #1e1e1e; 
+      /* Fondo con degradado oscuro para que el cristal resalte */
+      background: linear-gradient(135deg, #141e30, #243b55); 
       color: white; 
       padding: 20px; 
+      min-height: 100vh;
+      margin: 0;
     }
+    
     .tarjeta { 
-      background: #2d2d2d; 
-      padding: 15px; 
-      border-radius: 8px; 
-      margin-bottom: 10px; 
+      /* Efecto Glassmorphism */
+      background: rgba(255, 255, 255, 0.05); 
+      backdrop-filter: blur(10px); 
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
       border-left: 4px solid #4CAF50;
+      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+      padding: 20px; 
+      border-radius: 12px; 
+      margin-bottom: 15px; 
+      transition: transform 0.2s ease;
     }
+
+    .tarjeta:hover {
+      transform: translateY(-2px);
+    }
+
     .valor { 
       color: #4CAF50; 
       font-size: 1.2em; 
       font-weight: bold; 
+      text-shadow: 0 0 5px rgba(76, 175, 80, 0.3);
+    }
+
+    /* Estilizando el botón para que combine */
+    button {
+      transition: all 0.3s ease;
+    }
+    button:hover {
+      filter: brightness(1.1);
+      box-shadow: 0 0 10px rgba(76, 175, 80, 0.4);
+    }
+
+    /* Modal estilo cristal también */
+    .modal-contenido {
+      background: rgba(20, 30, 48, 0.7) !important;
+      backdrop-filter: blur(15px);
+      -webkit-backdrop-filter: blur(15px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+    }
+    
+    /* Scrollbar personalizada para que se vea moderna */
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 255, 255, 0.4);
     }
   </style>
 </head>
@@ -43,11 +93,16 @@
   </div>
 
   <div class="tarjeta">
-    <h2>⚙️ Top 3 Procesos (RAM)</h2>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+      <h2 style="margin: 0;">⚙️ Top 3 Procesos (RAM)</h2>
+      <button id="btn-ver-todos" style="padding: 6px 12px; cursor: pointer; background: #4CAF50; border: none; color: white; border-radius: 4px; font-weight: bold; font-size: 0.85em; transition: 0.3s;">
+        Ver Todas
+      </button>
+    </div>
+
     <ul id="lista-procesos" style="list-style-type: none; padding: 0; margin: 0; color: #aaa;">
       <li>Buscando procesos...</li>
     </ul>
-    <button id="btn-ver-todos" style="margin-top: 15px; padding: 8px 15px; cursor: pointer; background: #4CAF50; border: none; color: white; border-radius: 4px; font-weight: bold; width: 100%;">Ver Todas Las Tareas</button>
   </div>
     
   <div id="modal-procesos" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); padding: 20px; box-sizing: border-box; z-index: 1000;">
