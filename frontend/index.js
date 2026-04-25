@@ -1,20 +1,129 @@
+// ==========================================================================
+// 1. VARIABLES GLOBALES Y ESTADOS
+// ==========================================================================
+
+// Historiales para las gráficas (60 segundos llenos de ceros)
+const historialCpu = Array(60).fill(0); 
+const historialRam = Array(60).fill(0);
+const etiquetasTiempo = Array(60).fill(''); // Eje X vacío
+
+// Variables para guardar las instancias de las gráficas
+let graficoCpu;
+let graficoRam;
+let intervaloModal; // Controla el refresco del Administrador de Tareas
+
+
+// ==========================================================================
+// 2. INICIALIZACIÓN DE GRÁFICAS (Al cargar la ventana)
+// ==========================================================================
+
+window.onload = () => {
+    // --- Gráfica de CPU (Verde) ---
+    try {
+        const ctxCpu = document.getElementById('grafico-cpu').getContext('2d');
+        graficoCpu = new Chart(ctxCpu, {
+            type: 'line',
+            data: {
+                labels: etiquetasTiempo,
+                datasets: [{
+                    label: 'Uso de CPU (%)',
+                    data: historialCpu,
+                    borderColor: '#4CAF50',
+                    backgroundColor: 'rgba(76, 175, 80, 0.2)',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: false,
+                scales: {
+                    y: { beginAtZero: true, max: 100, grid: { color: 'rgba(255,255,255,0.1)' }, ticks: { color: '#aaa' } },
+                    x: { grid: { display: false } }
+                },
+                plugins: { legend: { labels: { color: 'white' } } }
+            }
+        });
+    } catch (e) {
+        console.error("Error cargando gráfica CPU:", e);
+    }
+
+    // --- Gráfica de RAM (Azul) ---
+    try {
+        const ctxRam = document.getElementById('grafico-ram').getContext('2d');
+        graficoRam = new Chart(ctxRam, {
+            type: 'line',
+            data: {
+                labels: etiquetasTiempo,
+                datasets: [{
+                    label: 'Uso de RAM (%)',
+                    data: historialRam,
+                    borderColor: '#2196F3',
+                    backgroundColor: 'rgba(33, 150, 243, 0.2)',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: false,
+                scales: {
+                    y: { beginAtZero: true, max: 100, grid: { color: 'rgba(255,255,255,0.1)' }, ticks: { color: '#aaa' } },
+                    x: { grid: { display: false } }
+                },
+                plugins: { legend: { labels: { color: 'white' } } }
+            }
+        });
+    } catch (e) {
+        console.error("Error cargando gráfica RAM:", e);
+    }
+
+    // Iniciamos el ciclo principal una vez que las gráficas existen
+    obtenerDatos();
+    setInterval(obtenerDatos, 1000);
+};
+
+
+// ==========================================================================
+// 3. OBTENCIÓN Y ACTUALIZACIÓN DE DATOS (API)
+// ==========================================================================
+
+// Función principal: Actualiza el Dashboard cada segundo
 async function obtenerDatos() {
     try {
         const respuesta = await fetch('http://localhost:5000/api/sistema');
         const datos = await respuesta.json();
         
-        // 1. Inyectamos CPU y RAM
+        // --- Inyectar Textos de Tarjetas ---
         document.getElementById('cpu-uso').innerText = datos.cpu + '%';
         document.getElementById('ram-uso').innerText = datos.ram.porcentaje + '%';
         document.getElementById('ram-total').innerText = datos.ram.total_gb + ' GB';
-        
-        // 2. Inyectamos el Almacenamiento (Disco)
         document.getElementById('disco-uso').innerText = datos.disco.porcentaje + '%';
         document.getElementById('disco-total').innerText = datos.disco.total_gb + ' GB';
+        
+        // --- Alimentar Gráfica de CPU ---
+        if (graficoCpu) {
+            historialCpu.push(datos.cpu);
+            historialCpu.shift();
+            graficoCpu.update();
+        }
 
-        // 3. Inyectamos los Procesos en vivo
+        // --- Alimentar Gráfica de RAM ---
+        if (graficoRam) {
+            historialRam.push(datos.ram.porcentaje);
+            historialRam.shift();
+            graficoRam.update();
+        }
+
+        // --- Actualizar Lista "Top 3 Procesos" ---
         const listaProcesos = document.getElementById('lista-procesos');
-        listaProcesos.innerHTML = ''; // Limpiamos la lista anterior
+        listaProcesos.innerHTML = ''; 
         
         datos.procesos.forEach(proc => {
             const li = document.createElement('li');
@@ -29,25 +138,14 @@ async function obtenerDatos() {
     }
 }
 
-// Hacemos que la función se repita cada 1 segundo
-setInterval(obtenerDatos, 1000);
-obtenerDatos();
-
-// --- LÓGICA DEL ADMINISTRADOR DE TAREAS (MODAL) ---
-
-const modal = document.getElementById('modal-procesos');
-const btnVerTodos = document.getElementById('btn-ver-todos');
-const btnCerrarModal = document.getElementById('btn-cerrar-modal');
-const listaTodosProcesos = document.getElementById('lista-todos-procesos');
-let intervaloModal; // Para actualizar el modal en tiempo real
-
-// Función para obtener TODOS los procesos
+// Función secundaria: Obtiene TODOS los procesos solo para el modal
 async function cargarTodosLosProcesos() {
     try {
         const respuesta = await fetch('http://localhost:5000/api/procesos');
         const procesos = await respuesta.json();
         
-        listaTodosProcesos.innerHTML = ''; // Limpiar lista
+        const listaTodosProcesos = document.getElementById('lista-todos-procesos');
+        listaTodosProcesos.innerHTML = ''; 
         
         procesos.forEach(proc => {
             const li = document.createElement('li');
@@ -58,20 +156,76 @@ async function cargarTodosLosProcesos() {
         });
     } catch (error) {
         console.error("Error cargando todos los procesos:", error);
-        listaTodosProcesos.innerHTML = '<li>Error al cargar. Verifica que el servidor Python esté encendido.</li>';
+        document.getElementById('lista-todos-procesos').innerHTML = '<li>Error al cargar. Verifica que el servidor Python esté encendido.</li>';
     }
 }
 
-// Abrir el modal
+
+// ==========================================================================
+// 4. LÓGICA DE INTERFAZ Y MODALES (Eventos de Clic)
+// ==========================================================================
+
+// --- Modal de Procesos (Administrador de Tareas) ---
+const modalProcesos = document.getElementById('modal-procesos');
+const btnVerTodos = document.getElementById('btn-ver-todos');
+const btnCerrarModalProcesos = document.getElementById('btn-cerrar-modal');
+
 btnVerTodos.addEventListener('click', () => {
-    modal.style.display = 'block';
-    cargarTodosLosProcesos(); // Cargar inmediatamente
-    // Actualizar la lista cada 2 segundos mientras esté abierto
+    modalProcesos.style.display = 'block';
+    cargarTodosLosProcesos(); // Cargar inmediatamente al abrir
     intervaloModal = setInterval(cargarTodosLosProcesos, 2000); 
 });
 
-// Cerrar el modal
-btnCerrarModal.addEventListener('click', () => {
-    modal.style.display = 'none';
-    clearInterval(intervaloModal); // Detener las actualizaciones para ahorrar recursos
+btnCerrarModalProcesos.addEventListener('click', () => {
+    modalProcesos.style.display = 'none';
+    clearInterval(intervaloModal); // Detener actualizaciones
+});
+
+
+// --- Modal de CPU ---
+const modalCpu = document.getElementById('modal-cpu');
+const tarjetaCpu = document.getElementById('tarjeta-cpu');
+const btnCerrarModalCpu = document.getElementById('btn-cerrar-modal-cpu');
+
+tarjetaCpu.addEventListener('click', () => {
+    modalCpu.style.display = 'block';
+});
+
+btnCerrarModalCpu.addEventListener('click', () => {
+    modalCpu.style.display = 'none';
+});
+
+// Efecto visual hover para tarjeta CPU
+tarjetaCpu.addEventListener('mouseover', () => {
+    tarjetaCpu.style.transform = 'translateY(-2px)';
+    tarjetaCpu.style.boxShadow = '0 8px 32px 0 rgba(76, 175, 80, 0.3)';
+});
+tarjetaCpu.addEventListener('mouseout', () => {
+    tarjetaCpu.style.transform = 'none';
+    tarjetaCpu.style.boxShadow = '0 8px 32px 0 rgba(0, 0, 0, 0.37)';
+});
+
+
+// --- Modal de RAM ---
+const modalRam = document.getElementById('modal-ram');
+const tarjetaRam = document.getElementById('tarjeta-ram');
+const btnCerrarModalRam = document.getElementById('btn-cerrar-modal-ram');
+
+tarjetaRam.addEventListener('click', () => {
+    modalRam.style.display = 'block';
+});
+
+btnCerrarModalRam.addEventListener('click', () => {
+    modalRam.style.display = 'none';
+});
+
+// Efecto visual hover para la tarjeta RAM (brillo azul)
+tarjetaRam.addEventListener('mouseover', () => {
+    tarjetaRam.style.transform = 'translateY(-2px)';
+    tarjetaRam.style.boxShadow = '0 8px 32px 0 rgba(33, 150, 243, 0.3)'; // Sombra azulada
+});
+
+tarjetaRam.addEventListener('mouseout', () => {
+    tarjetaRam.style.transform = 'none';
+    tarjetaRam.style.boxShadow = '0 8px 32px 0 rgba(0, 0, 0, 0.37)'; // Vuelve a la sombra oscura original
 });

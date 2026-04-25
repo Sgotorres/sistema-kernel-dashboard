@@ -3,7 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <title>Monitor del Kernel</title>
- <style>
+  
+  <style>
+    /* ==========================================================================
+       1. ESTILOS GLOBALES
+       ========================================================================== */
     body { 
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
       /* Fondo con degradado oscuro para que el cristal resalte */
@@ -13,23 +17,33 @@
       min-height: 100vh;
       margin: 0;
     }
-    
+
+    /* ==========================================================================
+       2. TARJETAS Y TEXTOS (Glassmorphism)
+       ========================================================================== */
     .tarjeta { 
-      /* Efecto Glassmorphism */
       background: rgba(255, 255, 255, 0.05); 
       backdrop-filter: blur(10px); 
       -webkit-backdrop-filter: blur(10px);
       border: 1px solid rgba(255, 255, 255, 0.1);
       border-left: 4px solid #4CAF50;
       box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
-      padding: 20px; 
+      
+      /* AQUI ESTÁ EL CAMBIO: Aumentamos el padding de 20px a 25px o 30px */
+      padding: 40px; 
+      
       border-radius: 12px; 
-      margin-bottom: 15px; 
+      margin-bottom: 15px; /* También aumenté un poquito el margen inferior para que no se peguen */
       transition: transform 0.2s ease;
     }
 
     .tarjeta:hover {
       transform: translateY(-2px);
+    }
+
+    /* Esto anula el movimiento solo para la tarjeta de procesos */
+    #tarjeta-procesos:hover {
+    transform: none !important;
     }
 
     .valor { 
@@ -39,16 +53,21 @@
       text-shadow: 0 0 5px rgba(76, 175, 80, 0.3);
     }
 
-    /* Estilizando el botón para que combine */
+    /* ==========================================================================
+       3. BOTONES
+       ========================================================================== */
     button {
       transition: all 0.3s ease;
     }
+
     button:hover {
       filter: brightness(1.1);
       box-shadow: 0 0 10px rgba(76, 175, 80, 0.4);
     }
 
-    /* Modal estilo cristal también */
+    /* ==========================================================================
+       4. MODALES Y BARRAS DE DESPLAZAMIENTO (Scrollbar)
+       ========================================================================== */
     .modal-contenido {
       background: rgba(20, 30, 48, 0.7) !important;
       backdrop-filter: blur(15px);
@@ -57,7 +76,6 @@
       box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
     }
     
-    /* Scrollbar personalizada para que se vea moderna */
     ::-webkit-scrollbar {
       width: 8px;
     }
@@ -75,24 +93,57 @@
   </style>
 </head>
 <body>
+
   <h1>⚡ Dashboard del Sistema</h1>
   
-  <div class="tarjeta">
-    <h2>🖥️ Procesador</h2>
-    <p>Carga actual: <span id="cpu-uso" class="valor">Calculando...</span></p>
+  <div class="tarjeta" id="tarjeta-cpu" style="cursor: pointer;">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+      <h2 style="margin: 0;">🖥️ Procesador</h2>
+    </div>
+    <p style="margin: 10px 0 0 0;">Carga actual: <span id="cpu-uso" class="valor">Calculando...</span></p>
   </div>
 
-  <div class="tarjeta">
-    <h2>🧠 Memoria RAM</h2>
-    <p>Uso actual: <span id="ram-uso" class="valor">Calculando...</span> (Total: <span id="ram-total"></span>)</p>
+  <div id="modal-cpu" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); padding: 20px; box-sizing: border-box; z-index: 1000;">
+    <div class="modal-contenido" style="padding: 20px; border-radius: 12px; max-width: 800px; margin: 20px auto; height: 80%; display: flex; flex-direction: column; border-left: 4px solid #4CAF50;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <h2 style="margin: 0;">📈 Rendimiento del CPU (Últimos 60s)</h2>
+            <button id="btn-cerrar-modal-cpu" style="cursor: pointer; background: #f44336; border: none; color: white; padding: 8px 15px; border-radius: 4px; font-weight: bold; transition: 0.3s;">Cerrar</button>
+        </div>
+        <div style="flex-grow: 1; position: relative; width: 100%;">
+            <canvas id="grafico-cpu"></canvas>
+        </div>
+    </div>
   </div>
 
-  <div class="tarjeta">
-    <h2>💾 Almacenamiento (Disco C)</h2>
-    <p>Uso actual: <span id="disco-uso" class="valor">Calculando...</span> (Total: <span id="disco-total"></span>)</p>
+
+  <div class="tarjeta" id="tarjeta-ram" style="cursor: pointer;">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+      <h2 style="margin: 0;">🧠 Memoria RAM</h2>
+    </div>
+    <p style="margin: 10px 0 0 0;">Uso actual: <span id="ram-uso" class="valor">Calculando...</span> (Total: <span id="ram-total"></span>)</p>
   </div>
 
-  <div class="tarjeta">
+  <div id="modal-ram" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); padding: 20px; box-sizing: border-box; z-index: 1000;">
+    <div class="modal-contenido" style="padding: 20px; border-radius: 12px; max-width: 800px; margin: 20px auto; height: 80%; display: flex; flex-direction: column; border-left: 4px solid #2196F3;"> 
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <h2 style="margin: 0;">📈 Rendimiento de RAM (Últimos 60s)</h2>
+            <button id="btn-cerrar-modal-ram" style="cursor: pointer; background: #f44336; border: none; color: white; padding: 8px 15px; border-radius: 4px; font-weight: bold; transition: 0.3s;">Cerrar</button>
+        </div>
+        <div style="flex-grow: 1; position: relative; width: 100%;">
+            <canvas id="grafico-ram"></canvas>
+        </div>
+    </div>
+  </div>
+
+
+  <div class="tarjeta" id="tarjeta-disco">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+      <h2 style="margin: 0;">💾 Almacenamiento (Disco C)</h2>
+    </div>
+    <p style="margin: 10px 0 0 0;">Uso actual: <span id="disco-uso" class="valor">Calculando...</span> (Total: <span id="disco-total"></span>)</p>
+  </div>
+
+  <div class="tarjeta" id="tarjeta-procesos">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
       <h2 style="margin: 0;">⚙️ Top 3 Procesos (RAM)</h2>
       <button id="btn-ver-todos" style="padding: 6px 12px; cursor: pointer; background: #4CAF50; border: none; color: white; border-radius: 4px; font-weight: bold; font-size: 0.85em; transition: 0.3s;">
@@ -105,20 +156,25 @@
     </ul>
   </div>
     
-  <div id="modal-procesos" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); padding: 20px; box-sizing: border-box; z-index: 1000;">
-    <div style="background: #2d2d2d; padding: 20px; border-radius: 8px; max-width: 700px; margin: 20px auto; height: 85%; display: flex; flex-direction: column; border-left: 4px solid #4CAF50;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-            <h2 style="margin: 0;">⚙️ Total De Tareas (RAM)</h2>
-            <button id="btn-cerrar-modal" style="cursor: pointer; background: #f44336; border: none; color: white; padding: 8px 15px; border-radius: 4px; font-weight: bold;">Cerrar</button>
+  <div id="modal-procesos" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); padding: 20px; box-sizing: border-box; z-index: 1000;">
+    <div class="modal-contenido" style="padding: 25px; border-radius: 15px; max-width: 750px; margin: 20px auto; height: 85%; display: flex; flex-direction: column; border-left: 5px solid #4CAF50; border-top: 1px solid rgba(255,255,255,0.1);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h2 style="margin: 0; color: white;">⚙️ Administrador de Tareas</h2>
+            <button id="btn-cerrar-modal" style="cursor: pointer; background: rgba(244, 67, 54, 0.2); border: 1px solid #f44336; color: #f44336; padding: 8px 20px; border-radius: 6px; font-weight: bold; transition: 0.3s;">
+              Cerrar
+            </button>
         </div>
-        <div style="overflow-y: auto; flex-grow: 1; padding-right: 10px;">
-            <ul id="lista-todos-procesos" style="list-style-type: none; padding: 0; margin: 0; color: #aaa;">
-                <li>Cargando todos los procesos...</li>
+
+        <div style="overflow-y: auto; flex-grow: 1; padding-right: 15px;">
+            <ul id="lista-todos-procesos" style="list-style-type: none; padding: 0; margin: 0; color: rgba(255,255,255,0.7);">
+                <li>Cargando lista de procesos...</li>
             </ul>
         </div>
     </div>
   </div>
     
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="index.js"></script>
+
 </body>
 </html>
