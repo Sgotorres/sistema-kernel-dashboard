@@ -1,10 +1,14 @@
 from flask import Flask, jsonify
 from flask_cors import CORS
 import psutil
+import logging # Añadimos esto
 
 app = Flask(__name__)
-# Habilitamos CORS para que nuestro frontend en Electron/HTML pueda leer esta API
 CORS(app) 
+
+# Añadimos el silenciador
+log = logging.getLogger('werkzeug')
+log.setLevel(logging.ERROR)
 
 @app.route('/api/sistema', methods=['GET'])
 def obtener_datos():
@@ -59,7 +63,7 @@ def obtener_todos_procesos():
     return jsonify(procesos_ordenados)
 
 if __name__ == "__main__":
-    print("🚀 Servidor del Kernel iniciado en el puerto 5000...")
-    print("👉 Entra en tu navegador a: http://localhost:5000/api/sistema")
+    print("Servidor del Kernel iniciado en el puerto 5000...")
+    print("Entra en tu navegador a: http://localhost:5000/api/sistema")
     # debug=False para evitar que reinicie dos veces los hilos de psutil
     app.run(port=5000, debug=False)
