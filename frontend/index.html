@@ -136,11 +136,22 @@
   </div>
 
 
-  <div class="tarjeta" id="tarjeta-disco">
+  <div class="tarjeta" id="tarjeta-disco" style="cursor: pointer;">
     <div style="display: flex; justify-content: space-between; align-items: center;">
       <h2 style="margin: 0;">💾 Almacenamiento (Disco C)</h2>
     </div>
     <p style="margin: 10px 0 0 0;">Uso actual: <span id="disco-uso" class="valor">Calculando...</span> (Total: <span id="disco-total"></span>)</p>
+  </div>
+
+  <div id="modal-disco" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); padding: 20px; box-sizing: border-box; z-index: 1000;">
+    <div class="modal-contenido" style="padding: 20px; border-radius: 12px; max-width: 800px; margin: 20px auto; height: 80%; display: flex; flex-direction: column; border-left: 4px solid #FF9800;"> <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <h2 style="margin: 0;">📈 Historial de Uso de Disco (Últimos 60s)</h2>
+            <button id="btn-cerrar-modal-disco" style="cursor: pointer; background: #f44336; border: none; color: white; padding: 8px 15px; border-radius: 4px; font-weight: bold; transition: 0.3s;">Cerrar</button>
+        </div>
+        <div style="flex-grow: 1; position: relative; width: 100%;">
+            <canvas id="grafico-disco"></canvas>
+        </div>
+    </div>
   </div>
 
   <div class="tarjeta" id="tarjeta-procesos">

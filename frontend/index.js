@@ -5,11 +5,13 @@
 // Historiales para las gráficas (60 segundos llenos de ceros)
 const historialCpu = Array(60).fill(0); 
 const historialRam = Array(60).fill(0);
+const historialDisco = Array(60).fill(0);
 const etiquetasTiempo = Array(60).fill(''); // Eje X vacío
 
 // Variables para guardar las instancias de las gráficas
 let graficoCpu;
 let graficoRam;
+let graficoDisco;
 let intervaloModal; // Controla el refresco del Administrador de Tareas
 
 
@@ -84,6 +86,33 @@ window.onload = () => {
         console.error("Error cargando gráfica RAM:", e);
     }
 
+    // Gráfica de Disco (Naranja)
+    try {
+        const ctxDisco = document.getElementById('grafico-disco').getContext('2d');
+        graficoDisco = new Chart(ctxDisco, {
+            type: 'line',
+            data: {
+                labels: etiquetasTiempo,
+                datasets: [{
+                    label: 'Uso de Disco (%)',
+                    data: historialDisco,
+                    borderColor: '#FF9800',
+                    backgroundColor: 'rgba(255, 152, 0, 0.2)',
+                    borderWidth: 2,
+                    fill: true, tension: 0.4, pointRadius: 0
+                }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false, animation: false,
+                scales: {
+                    y: { beginAtZero: true, max: 100, grid: { color: 'rgba(255,255,255,0.1)' }, ticks: { color: '#aaa' } },
+                    x: { grid: { display: false } }
+                },
+                plugins: { legend: { labels: { color: 'white' } } }
+            }
+        });
+    } catch (e) { console.error("Error en gráfica Disco:", e); }
+
     // Iniciamos el ciclo principal una vez que las gráficas existen
     obtenerDatos();
     setInterval(obtenerDatos, 1000);
@@ -119,6 +148,13 @@ async function obtenerDatos() {
             historialRam.push(datos.ram.porcentaje);
             historialRam.shift();
             graficoRam.update();
+        }
+
+        // ---  Alimentar Gráfica del DISCO ---
+        if (graficoDisco) {
+            historialDisco.push(datos.disco.porcentaje);
+            historialDisco.shift();
+            graficoDisco.update();
         }
 
         // --- Actualizar Lista "Top 3 Procesos" ---
@@ -228,4 +264,22 @@ tarjetaRam.addEventListener('mouseover', () => {
 tarjetaRam.addEventListener('mouseout', () => {
     tarjetaRam.style.transform = 'none';
     tarjetaRam.style.boxShadow = '0 8px 32px 0 rgba(0, 0, 0, 0.37)'; // Vuelve a la sombra oscura original
+});
+
+// --- Modal de Disco ---
+const modalDisco = document.getElementById('modal-disco');
+const tarjetaDisco = document.getElementById('tarjeta-disco');
+const btnCerrarDisco = document.getElementById('btn-cerrar-modal-disco');
+
+tarjetaDisco.onclick = () => modalDisco.style.display = 'block';
+btnCerrarDisco.onclick = () => modalDisco.style.display = 'none';
+
+// Brillo naranja al pasar el mouse
+tarjetaDisco.addEventListener('mouseover', () => {
+    tarjetaDisco.style.transform = 'translateY(-2px)';
+    tarjetaDisco.style.boxShadow = '0 8px 32px 0 rgba(255, 152, 0, 0.3)';
+});
+tarjetaDisco.addEventListener('mouseout', () => {
+    tarjetaDisco.style.transform = 'none';
+    tarjetaDisco.style.boxShadow = '0 8px 32px 0 rgba(0, 0, 0, 0.37)';
 });
