@@ -62,6 +62,23 @@ def obtener_todos_procesos():
     procesos_ordenados = sorted(procesos, key=lambda p: p['memory_percent'], reverse=True)
     return jsonify(procesos_ordenados)
 
+# ==========================================
+# NUEVA RUTA: MATAR PROCESOS POR PID
+# ==========================================
+@app.route('/api/matar/<int:pid>', methods=['POST'])
+def matar_proceso(pid):
+    try:
+        proceso = psutil.Process(pid)
+        proceso.terminate() # Cierra el proceso de forma limpia
+        return jsonify({"exito": True, "mensaje": f"Proceso {pid} terminado correctamente."})
+    
+    except psutil.NoSuchProcess:
+        return jsonify({"exito": False, "error": "El proceso ya no existe o se cerró solo."}), 404
+    except psutil.AccessDenied:
+        return jsonify({"exito": False, "error": "Permiso denegado. Faltan privilegios de Administrador."}), 403
+    except Exception as e:
+        return jsonify({"exito": False, "error": str(e)}), 500
+
 if __name__ == "__main__":
     print("Servidor del Kernel iniciado en el puerto 5000...")
     print("Entra en tu navegador a: http://localhost:5000/api/sistema")

@@ -185,9 +185,18 @@ async function cargarTodosLosProcesos() {
         
         procesos.forEach(proc => {
             const li = document.createElement('li');
-            li.innerHTML = `PID: <b style="color:white;">${proc.pid}</b> | ${proc.name} <span class="valor" style="font-size: 0.9em; float: right;">${proc.memory_percent.toFixed(2)}%</span>`;
-            li.style.borderBottom = "1px solid #444";
-            li.style.padding = "8px 0";
+            li.style.borderBottom = "1px solid rgba(255, 255, 255, 0.1)";
+            li.style.padding = "10px 0";
+            
+            li.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                    <span>PID: <b style="color:white;">${proc.pid}</b> | ${proc.name} <span class="valor" style="font-size: 0.9em; margin-left: 10px;">${proc.memory_percent.toFixed(2)}%</span></span>
+                    
+                    <button onclick="matarProceso(${proc.pid})" style="background: rgba(110, 36, 30, 0.2); border: 1px solid #bd4138; color: #ee3a2e; border-radius: 4px; padding: 4px 10px; cursor: pointer; font-weight: bold; transition: 0.3s;" onmouseover="this.style.background='#bd443c'; this.style.color='white';" onmouseout="this.style.background='rgba(244, 67, 54, 0.2)'; this.style.color='#f44336';">
+                        Terminar
+                    </button>
+                </div>
+            `;
             listaTodosProcesos.appendChild(li);
         });
     } catch (error) {
@@ -196,6 +205,53 @@ async function cargarTodosLosProcesos() {
     }
 }
 
+// --- LÓGICA DE CONFIRMACIÓN PARA MATAR PROCESOS ---
+
+let pidSeleccionado = null; // Variable para recordar qué proceso queremos matar
+const modalConfirmacion = document.getElementById('modal-confirmacion');
+const spanConfirmPid = document.getElementById('confirm-pid');
+const btnCancelarMatar = document.getElementById('btn-cancelar-matar');
+const btnConfirmarMatar = document.getElementById('btn-confirmar-matar');
+
+// 1. Al hacer clic en "Terminar" en la lista, se abre este modal
+function matarProceso(pid) {
+    pidSeleccionado = pid; // Guardamos el PID
+    spanConfirmPid.innerText = pid; // Lo mostramos en el texto
+    modalConfirmacion.style.display = 'flex'; // Mostramos el modal centrado
+}
+
+// 2. Si el usuario se arrepiente y hace clic en "Cancelar"
+btnCancelarMatar.addEventListener('click', () => {
+    modalConfirmacion.style.display = 'none'; // Ocultamos el modal
+    pidSeleccionado = null; // Olvidamos el PID
+});
+
+// 3. Si el usuario confirma haciendo clic en el botón rojo
+btnConfirmarMatar.addEventListener('click', async () => {
+    modalConfirmacion.style.display = 'none'; // Ocultamos el modal rápido para dar respuesta visual
+    
+    if (!pidSeleccionado) return; // Seguridad extra
+
+    try {
+        // Ejecutamos la orden al servidor Python
+        const respuesta = await fetch(`http://localhost:5000/api/matar/${pidSeleccionado}`, {
+            method: 'POST'
+        });
+        
+        const resultado = await respuesta.json();
+
+        if (resultado.exito) {
+            cargarTodosLosProcesos(); // Refrescamos la lista
+        } else {
+            alert("No se pudo cerrar: " + resultado.error);
+        }
+    } catch (error) {
+        console.error("Error de conexión al intentar matar el proceso:", error);
+        alert("Error de conexión con el núcleo del sistema.");
+    }
+    
+    pidSeleccionado = null; // Limpiamos la variable
+});
 
 // ==========================================================================
 // 4. LÓGICA DE INTERFAZ Y MODALES (Eventos de Clic)
