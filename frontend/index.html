@@ -124,7 +124,11 @@
     <div style="display: flex; justify-content: space-between; align-items: center;">
       <h2 style="margin: 0;">🧠 Memoria RAM</h2>
     </div>
-    <p style="margin: 10px 0 0 0;">Uso actual: <span id="ram-uso" class="valor">Calculando...</span> (Total: <span id="ram-total"></span>)</p>
+    <p style="margin-top: 10px;">
+        Uso actual: 
+        <span id="ram-uso" class="valor" style="display: inline-block; min-width: 55px;">Calculando...</span> 
+        <span style="color: white; font-size: 0.9em;">(Total: <span id="ram-total"></span>)</span>
+    </p>
   </div>
 
   <div id="modal-ram" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); padding: 20px; box-sizing: border-box; z-index: 1000;">
@@ -144,7 +148,11 @@
     <div style="display: flex; justify-content: space-between; align-items: center;">
       <h2 style="margin: 0;">💾 Almacenamiento (Disco C)</h2>
     </div>
-    <p style="margin: 10px 0 0 0;">Uso actual: <span id="disco-uso" class="valor">Calculando...</span> (Total: <span id="disco-total"></span>)</p>
+    <p style="margin-top: 10px;">
+        Uso actual: 
+        <span id="disco-uso" class="valor" style="display: inline-block; min-width: 55px;">Calculando...</span> 
+        <span style="color: white; font-size: 0.9em;">(Total: <span id="disco-total"></span>)</span>
+    </p>
   </div>
 
   <div id="modal-disco" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); padding: 20px; box-sizing: border-box; z-index: 1000;">
