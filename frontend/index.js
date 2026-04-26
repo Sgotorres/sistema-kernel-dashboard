@@ -131,6 +131,7 @@ async function obtenerDatos() {
         
         // --- Inyectar Textos de Tarjetas ---
         document.getElementById('cpu-uso').innerText = datos.cpu + '%';
+        document.getElementById('cpu-modelo').innerText = datos.procesador_modelo;
         document.getElementById('ram-uso').innerText = datos.ram.porcentaje + '%';
         document.getElementById('ram-total').innerText = datos.ram.total_gb + ' GB';
         document.getElementById('disco-uso').innerText = datos.disco.porcentaje + '%';

@@ -1,23 +1,37 @@
 from flask import Flask, jsonify
 from flask_cors import CORS
 import psutil
-import logging # Añadimos esto
+import platform
+import datetime
+import logging
+import subprocess # NUEVO: Nos permite hablar con el sistema de Windows
 
 app = Flask(__name__)
 CORS(app) 
 
-# Añadimos el silenciador
 log = logging.getLogger('werkzeug')
 log.setLevel(logging.ERROR)
+
+# NUEVA FUNCIÓN: Obtiene y limpia el nombre real del procesador
+def obtener_nombre_procesador():
+    try:
+        # Pide a Windows el nombre comercial exacto
+        comando = subprocess.check_output(["wmic", "cpu", "get", "name"]).decode().strip().split('\n')[1]
+        
+        # Limpia el texto: "Intel(R) Core(TM) i7-10750H CPU @ 2.60GHz" -> "Intel Core i7-10750H"
+        nombre_limpio = comando.replace("(R)", "").replace("(TM)", "").replace("CPU", "").split("@")[0].strip()
+        return nombre_limpio
+    except Exception:
+        return platform.processor() # Plan B por si algo falla
 
 @app.route('/api/sistema', methods=['GET'])
 def obtener_datos():
     # 1. CPU y RAM
-    uso_cpu = psutil.cpu_percent(interval=0.1) # Intervalo más corto para respuestas rápidas
+    uso_cpu = psutil.cpu_percent(interval=0.1)
     memoria = psutil.virtual_memory()
     ram_total_gb = memoria.total / (1024**3)
     
-    # 2. Almacenamiento (Disco C)
+    # 2. Almacenamiento
     disco = psutil.disk_usage('C:\\')
     disco_total_gb = disco.total / (1024**3)
     
@@ -32,18 +46,28 @@ def obtener_datos():
             
     procesos_ordenados = sorted(procesos, key=lambda p: p['memory_percent'], reverse=True)[:3]
     
-    # Empaquetamos todo en un diccionario (JSON)
+    # 4. Información del Sistema
+    info_so = {
+        "sistema": f"{platform.system()} {platform.release()}",
+        "arquitectura": platform.machine(),
+        "nucleos": psutil.cpu_count(logical=False)
+    }
+
+    # 5. Uptime
+    fecha_encendido = datetime.datetime.fromtimestamp(psutil.boot_time())
+    tiempo_actual = datetime.datetime.now()
+    diferencia = tiempo_actual - fecha_encendido
+    uptime_str = str(diferencia).split('.')[0] 
+
+    # Empaquetamos todo
     datos_sistema = {
         "cpu": uso_cpu,
-        "ram": {
-            "porcentaje": memoria.percent,
-            "total_gb": round(ram_total_gb, 2)
-        },
-        "disco": {
-            "porcentaje": disco.percent,
-            "total_gb": round(disco_total_gb, 2)
-        },
-        "procesos": procesos_ordenados
+        "procesador_modelo": obtener_nombre_procesador(), # <--- USAMOS LA FUNCIÓN AQUÍ
+        "ram": { "porcentaje": memoria.percent, "total_gb": round(ram_total_gb, 2) },
+        "disco": { "porcentaje": disco.percent, "total_gb": round(disco_total_gb, 2) },
+        "procesos": procesos_ordenados,
+        "info": info_so,
+        "uptime": uptime_str
     }
     
     return jsonify(datos_sistema)
