@@ -1,10 +1,10 @@
-from flask import Flask, jsonify
-from flask_cors import CORS
-import psutil
-import platform
-import datetime
-import logging
-import subprocess # NUEVO: Nos permite hablar con el sistema de Windows
+from flask import Flask, jsonify # Flask crea el servidor web local.
+from flask_cors import CORS # Da permiso de seguridad
+import psutil # Es el motor principal
+import platform # Obtiene la información de la computadora
+import datetime # Maneja fechas y tiempos
+import logging # Controla los mensajes de la terminal
+import subprocess # Permite hablar con el sistema de Windows
 
 app = Flask(__name__)
 CORS(app) 
@@ -12,13 +12,13 @@ CORS(app)
 log = logging.getLogger('werkzeug')
 log.setLevel(logging.ERROR)
 
-# NUEVA FUNCIÓN: Obtiene y limpia el nombre real del procesador
+# nombre real del procesador
 def obtener_nombre_procesador():
     try:
         # Pide a Windows el nombre comercial exacto
         comando = subprocess.check_output(["wmic", "cpu", "get", "name"]).decode().strip().split('\n')[1]
         
-        # Limpia el texto: "Intel(R) Core(TM) i7-10750H CPU @ 2.60GHz" -> "Intel Core i7-10750H"
+        # Limpia el texto
         nombre_limpio = comando.replace("(R)", "").replace("(TM)", "").replace("CPU", "").split("@")[0].strip()
         return nombre_limpio
     except Exception:

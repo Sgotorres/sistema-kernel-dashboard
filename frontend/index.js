@@ -113,7 +113,7 @@ window.onload = () => {
         });
     } catch (e) { console.error("Error en gráfica Disco:", e); }
 
-    // Iniciamos el ciclo principal una vez que las gráficas existen
+    // Inicia el ciclo principal una vez que las gráficas existen
     obtenerDatos();
     setInterval(obtenerDatos, 1000);
 };
