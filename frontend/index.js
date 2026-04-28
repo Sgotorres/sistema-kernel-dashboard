@@ -1,19 +1,26 @@
+// ==========================================================================
 // 1. VARIABLES GLOBALES Y ESTADOS
+// ==========================================================================
 
+// Historiales para las gráficas (60 segundos llenos de ceros)
 const historialCpu = Array(60).fill(0); 
 const historialRam = Array(60).fill(0);
 const historialDisco = Array(60).fill(0);
-const etiquetasTiempo = Array(60).fill(''); 
+const etiquetasTiempo = Array(60).fill(''); // Eje X vacío
 
+// Variables para guardar las instancias de las gráficas
 let graficoCpu;
 let graficoRam;
 let graficoDisco;
-let intervaloModal; 
+let intervaloModal; // Controla el refresco del Administrador de Tareas
 
 
+// ==========================================================================
 // 2. INICIALIZACIÓN DE GRÁFICAS (Al cargar la ventana)
+// ==========================================================================
 
 window.onload = () => {
+    // --- Gráfica de CPU (Verde) ---
     try {
         const ctxCpu = document.getElementById('grafico-cpu').getContext('2d');
         graficoCpu = new Chart(ctxCpu, {
@@ -46,6 +53,7 @@ window.onload = () => {
         console.error("Error cargando gráfica CPU:", e);
     }
 
+    // --- Gráfica de RAM (Azul) ---
     try {
         const ctxRam = document.getElementById('grafico-ram').getContext('2d');
         graficoRam = new Chart(ctxRam, {
@@ -78,6 +86,7 @@ window.onload = () => {
         console.error("Error cargando gráfica RAM:", e);
     }
 
+    // Gráfica de Disco (Naranja)
     try {
         const ctxDisco = document.getElementById('grafico-disco').getContext('2d');
         graficoDisco = new Chart(ctxDisco, {
@@ -104,19 +113,23 @@ window.onload = () => {
         });
     } catch (e) { console.error("Error en gráfica Disco:", e); }
 
-    
+    // Inicia el ciclo principal una vez que las gráficas existen
     obtenerDatos();
     setInterval(obtenerDatos, 1000);
 };
 
 
+// ==========================================================================
 // 3. OBTENCIÓN Y ACTUALIZACIÓN DE DATOS (API)
+// ==========================================================================
 
+// Función principal: Actualiza el Dashboard cada segundo
 async function obtenerDatos() {
     try {
         const respuesta = await fetch('http://localhost:5000/api/sistema');
         const datos = await respuesta.json();
         
+        // --- Inyectar Textos de Tarjetas ---
         document.getElementById('cpu-uso').innerText = datos.cpu + '%';
         document.getElementById('cpu-modelo').innerText = datos.procesador_modelo;
         document.getElementById('ram-uso').innerText = datos.ram.porcentaje + '%';
@@ -124,24 +137,28 @@ async function obtenerDatos() {
         document.getElementById('disco-uso').innerText = datos.disco.porcentaje + '%';
         document.getElementById('disco-total').innerText = datos.disco.total_gb + ' GB';
         
+        // --- Alimentar Gráfica de CPU ---
         if (graficoCpu) {
             historialCpu.push(datos.cpu);
             historialCpu.shift();
             graficoCpu.update();
         }
 
+        // --- Alimentar Gráfica de RAM ---
         if (graficoRam) {
             historialRam.push(datos.ram.porcentaje);
             historialRam.shift();
             graficoRam.update();
         }
 
+        // ---  Alimentar Gráfica del DISCO ---
         if (graficoDisco) {
             historialDisco.push(datos.disco.porcentaje);
             historialDisco.shift();
             graficoDisco.update();
         }
 
+        // --- Actualizar Lista "Top 3 Procesos" ---
         const listaProcesos = document.getElementById('lista-procesos');
         listaProcesos.innerHTML = ''; 
         
@@ -158,6 +175,7 @@ async function obtenerDatos() {
     }
 }
 
+// Función secundaria: Obtiene TODOS los procesos solo para el modal
 async function cargarTodosLosProcesos() {
     try {
         const respuesta = await fetch('http://localhost:5000/api/procesos');
@@ -190,27 +208,30 @@ async function cargarTodosLosProcesos() {
 
 // --- LÓGICA DE CONFIRMACIÓN PARA MATAR PROCESOS ---
 
-let pidSeleccionado = null;r
+let pidSeleccionado = null; // Variable para recordar qué proceso queremos matar
 const modalConfirmacion = document.getElementById('modal-confirmacion');
 const spanConfirmPid = document.getElementById('confirm-pid');
 const btnCancelarMatar = document.getElementById('btn-cancelar-matar');
 const btnConfirmarMatar = document.getElementById('btn-confirmar-matar');
 
+// 1. Al hacer clic en "Terminar" en la lista, se abre este modal
 function matarProceso(pid) {
-    pidSeleccionado = pid;
-    spanConfirmPid.innerText = pid;
-    modalConfirmacion.style.display = 'flex';
+    pidSeleccionado = pid; // Guardamos el PID
+    spanConfirmPid.innerText = pid; // Lo mostramos en el texto
+    modalConfirmacion.style.display = 'flex'; // Mostramos el modal centrado
 }
 
+// 2. Si el usuario se arrepiente y hace clic en "Cancelar"
 btnCancelarMatar.addEventListener('click', () => {
-    modalConfirmacion.style.display = 'none'; 
-    pidSeleccionado = null; 
+    modalConfirmacion.style.display = 'none'; // Ocultamos el modal
+    pidSeleccionado = null; // Olvidamos el PID
 });
 
+// 3. Si el usuario confirma haciendo clic en el botón rojo
 btnConfirmarMatar.addEventListener('click', async () => {
-    modalConfirmacion.style.display = 'none'; 
+    modalConfirmacion.style.display = 'none'; // Ocultamos el modal rápido para dar respuesta visual
     
-    if (!pidSeleccionado) return; 
+    if (!pidSeleccionado) return; // Seguridad extra
 
     try {
         // Ejecutamos la orden al servidor Python
@@ -221,7 +242,7 @@ btnConfirmarMatar.addEventListener('click', async () => {
         const resultado = await respuesta.json();
 
         if (resultado.exito) {
-            cargarTodosLosProcesos(); 
+            cargarTodosLosProcesos(); // Refrescamos la lista
         } else {
             alert("No se pudo cerrar: " + resultado.error);
         }
@@ -230,27 +251,31 @@ btnConfirmarMatar.addEventListener('click', async () => {
         alert("Error de conexión con el núcleo del sistema.");
     }
     
-    pidSeleccionado = null;
+    pidSeleccionado = null; // Limpiamos la variable
 });
 
+// ==========================================================================
 // 4. LÓGICA DE INTERFAZ Y MODALES (Eventos de Clic)
+// ==========================================================================
 
+// --- Modal de Procesos (Administrador de Tareas) ---
 const modalProcesos = document.getElementById('modal-procesos');
 const btnVerTodos = document.getElementById('btn-ver-todos');
 const btnCerrarModalProcesos = document.getElementById('btn-cerrar-modal');
 
 btnVerTodos.addEventListener('click', () => {
     modalProcesos.style.display = 'block';
-    cargarTodosLosProcesos(); 
+    cargarTodosLosProcesos(); // Cargar inmediatamente al abrir
     intervaloModal = setInterval(cargarTodosLosProcesos, 2000); 
 });
 
 btnCerrarModalProcesos.addEventListener('click', () => {
     modalProcesos.style.display = 'none';
-    clearInterval(intervaloModal); 
+    clearInterval(intervaloModal); // Detener actualizaciones
 });
 
 
+// --- Modal de CPU ---
 const modalCpu = document.getElementById('modal-cpu');
 const tarjetaCpu = document.getElementById('tarjeta-cpu');
 const btnCerrarModalCpu = document.getElementById('btn-cerrar-modal-cpu');
@@ -263,6 +288,7 @@ btnCerrarModalCpu.addEventListener('click', () => {
     modalCpu.style.display = 'none';
 });
 
+// Efecto visual hover para tarjeta CPU
 tarjetaCpu.addEventListener('mouseover', () => {
     tarjetaCpu.style.transform = 'translateY(-2px)';
     tarjetaCpu.style.boxShadow = '0 8px 32px 0 rgba(76, 175, 80, 0.3)';
@@ -273,6 +299,7 @@ tarjetaCpu.addEventListener('mouseout', () => {
 });
 
 
+// --- Modal de RAM ---
 const modalRam = document.getElementById('modal-ram');
 const tarjetaRam = document.getElementById('tarjeta-ram');
 const btnCerrarModalRam = document.getElementById('btn-cerrar-modal-ram');
@@ -285,6 +312,7 @@ btnCerrarModalRam.addEventListener('click', () => {
     modalRam.style.display = 'none';
 });
 
+// Efecto visual hover para la tarjeta RAM (brillo azul)
 tarjetaRam.addEventListener('mouseover', () => {
     tarjetaRam.style.transform = 'translateY(-2px)';
     tarjetaRam.style.boxShadow = '0 8px 32px 0 rgba(33, 150, 243, 0.3)'; // Sombra azulada
@@ -295,6 +323,7 @@ tarjetaRam.addEventListener('mouseout', () => {
     tarjetaRam.style.boxShadow = '0 8px 32px 0 rgba(0, 0, 0, 0.37)'; // Vuelve a la sombra oscura original
 });
 
+// --- Modal de Disco ---
 const modalDisco = document.getElementById('modal-disco');
 const tarjetaDisco = document.getElementById('tarjeta-disco');
 const btnCerrarDisco = document.getElementById('btn-cerrar-modal-disco');
@@ -302,6 +331,7 @@ const btnCerrarDisco = document.getElementById('btn-cerrar-modal-disco');
 tarjetaDisco.onclick = () => modalDisco.style.display = 'block';
 btnCerrarDisco.onclick = () => modalDisco.style.display = 'none';
 
+// Brillo naranja al pasar el mouse
 tarjetaDisco.addEventListener('mouseover', () => {
     tarjetaDisco.style.transform = 'translateY(-2px)';
     tarjetaDisco.style.boxShadow = '0 8px 32px 0 rgba(255, 152, 0, 0.3)';
