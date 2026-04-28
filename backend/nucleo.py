@@ -92,14 +92,18 @@ def obtener_todos_procesos():
 @app.route('/api/matar/<int:pid>', methods=['POST'])
 def matar_proceso(pid):
     try:
-        proceso = psutil.Process(pid)
-        proceso.terminate() # Cierra el proceso de forma limpia
-        return jsonify({"exito": True, "mensaje": f"Proceso {pid} terminado correctamente."})
+        # Comando nativo de Windows para aniquilar procesos rebeldes
+        # /F = Force (Fuerza el cierre inmediato, no pregunta)
+        # /T = Tree (Mata al proceso padre y a absolutamente todos sus hijos a la vez)
+        comando = f"taskkill /F /T /PID {pid}"
+        
+        # Ejecutamos la orden en la consola invisible de Windows
+        subprocess.run(comando, shell=True, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        
+        return jsonify({"exito": True, "mensaje": f"Árbol del proceso {pid} aniquilado con éxito."})
     
-    except psutil.NoSuchProcess:
-        return jsonify({"exito": False, "error": "El proceso ya no existe o se cerró solo."}), 404
-    except psutil.AccessDenied:
-        return jsonify({"exito": False, "error": "Permiso denegado. Faltan privilegios de Administrador."}), 403
+    except subprocess.CalledProcessError:
+        return jsonify({"exito": False, "error": "El sistema bloqueó el cierre. Se requieren permisos de Administrador."}), 403
     except Exception as e:
         return jsonify({"exito": False, "error": str(e)}), 500
 
