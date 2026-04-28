@@ -1,6 +1,4 @@
-// ==========================================================================
 // 1. VARIABLES GLOBALES Y ESTADOS
-// ==========================================================================
 
 // Historiales para las gráficas (60 segundos llenos de ceros)
 const historialCpu = Array(60).fill(0); 
@@ -15,9 +13,7 @@ let graficoDisco;
 let intervaloModal; // Controla el refresco del Administrador de Tareas
 
 
-// ==========================================================================
 // 2. INICIALIZACIÓN DE GRÁFICAS (Al cargar la ventana)
-// ==========================================================================
 
 window.onload = () => {
     // --- Gráfica de CPU (Verde) ---
@@ -119,9 +115,7 @@ window.onload = () => {
 };
 
 
-// ==========================================================================
 // 3. OBTENCIÓN Y ACTUALIZACIÓN DE DATOS (API)
-// ==========================================================================
 
 // Función principal: Actualiza el Dashboard cada segundo
 async function obtenerDatos() {
@@ -254,9 +248,7 @@ btnConfirmarMatar.addEventListener('click', async () => {
     pidSeleccionado = null; // Limpiamos la variable
 });
 
-// ==========================================================================
 // 4. LÓGICA DE INTERFAZ Y MODALES (Eventos de Clic)
-// ==========================================================================
 
 // --- Modal de Procesos (Administrador de Tareas) ---
 const modalProcesos = document.getElementById('modal-procesos');

@@ -86,13 +86,11 @@ def obtener_todos_procesos():
     procesos_ordenados = sorted(procesos, key=lambda p: p['memory_percent'], reverse=True)
     return jsonify(procesos_ordenados)
 
-# ==========================================
 # NUEVA RUTA: MATAR PROCESOS POR PID
-# ==========================================
+
 @app.route('/api/matar/<int:pid>', methods=['POST'])
 def matar_proceso(pid):
     try:
-        # Comando nativo de Windows para aniquilar procesos rebeldes
         # /F = Force (Fuerza el cierre inmediato, no pregunta)
         # /T = Tree (Mata al proceso padre y a absolutamente todos sus hijos a la vez)
         comando = f"taskkill /F /T /PID {pid}"
