@@ -14,30 +14,15 @@ log.setLevel(logging.ERROR)
 
 # nombre real del procesador
 def obtener_nombre_procesador():
-    # Detectamos el sistema operativo actual
-    sistema = platform.system()
-    
     try:
-        if sistema == "Windows":
-            # Comando nativo de Windows
-            comando = subprocess.check_output(["wmic", "cpu", "get", "name"]).decode().strip().split('\n')[1]
-            return comando.replace("(R)", "").replace("(TM)", "").replace("CPU", "").split("@")[0].strip()
-            
-        elif sistema == "Darwin": 
-            # Darwin es el núcleo de macOS (Apple)
-            comando = subprocess.check_output(["sysctl", "-n", "machdep.cpu.brand_string"]).decode().strip()
-            return comando
-            
-        elif sistema == "Linux":
-            # Comando nativo para distribuciones Linux
-            comando = subprocess.check_output('grep "model name" /proc/cpuinfo | head -1', shell=True).decode().strip()
-            return comando.split(":")[1].strip()
-            
-    except Exception:
-        pass
+        # Pide a Windows el nombre comercial exacto
+        comando = subprocess.check_output(["wmic", "cpu", "get", "name"]).decode().strip().split('\n')[1]
         
-    # Plan B: Si es un sistema operativo muy extraño, usamos el genérico de Python
-    return platform.processor()
+        # Limpia el texto
+        nombre_limpio = comando.replace("(R)", "").replace("(TM)", "").replace("CPU", "").split("@")[0].strip()
+        return nombre_limpio
+    except Exception:
+        return platform.processor() # Plan B por si algo falla
 
 @app.route('/api/sistema', methods=['GET'])
 def obtener_datos():
